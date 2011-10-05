@@ -8,6 +8,13 @@
  *	----------------------------------
  *	Change Log
  *	----------------------------------
+ *      2011-09-29
+                - added updatedStoreNavMenuPosition to update the navmenu_position in a store in the db
+		- added getStoresInOrder function to return stores in the order they appear in nav menu
+		- added compareStoresOrder function as helper function to getStoresInOrder used by usort method
+		- updated createStore function to set the navmenu_position of a store.
+		- updated getStores function to return also the navmenu_position of the stores
+		- updated the updateStore function to also update the navmenu_position of the specified store
  *	2011-08-12
  		- updated getFilteredItems() to return items with new argument $order
  *	2011-08-05
@@ -539,7 +546,8 @@ EOD;
 			{$this->wpdb->prefix}topspin_stores.default_sorting,
 			{$this->wpdb->prefix}topspin_stores.default_sorting_by,
 			{$this->wpdb->prefix}topspin_stores.items_order,
-			{$this->wpdb->prefix}topspin_stores.featured_item
+			{$this->wpdb->prefix}topspin_stores.featured_item,
+			{$this->wpdb->prefix}topspin_stores.navmenu_position
 		FROM {$this->wpdb->prefix}topspin_stores
 		LEFT JOIN
 			{$this->wpdb->prefix}posts ON {$this->wpdb->prefix}topspin_stores.post_id = {$this->wpdb->prefix}posts.ID
@@ -551,6 +559,30 @@ EOD;
 EOD;
 		}
 		if(in_array($status,array('publish','trash','all'))) { return $this->wpdb->get_results($this->wpdb->prepare($sql,array($status))); }
+	}
+
+	public function getStoresInOrder($status='publish') { 
+		##      Retrieves a list of Stores in the order of their nav menu position.
+                ##
+                ##      PARAMETERS
+                ##              @status                         Enumeration: publish, trash, all
+                ##
+                ##      RETURN
+                ##              The stores table as a multi-dimensional arrar in order that they should appear in nav menu.
+		$stores = $this->getStores();
+		usort($stores,array($this,'compareStoresMenuPosition'));  // sorts the array according to navmenu_position.
+		return $stores; 
+	}
+
+	public function compareStoresMenuPosition($a, $b) {
+		##	Comapres teh menu position of the two store items.
+		## 
+		##	PARAMETERS
+		##		@a and @b  			Both are store items.
+		##		
+		##	RETURN
+		##		-1 if @a's nav menu position comes after that of @b; 1 if the reverse is true.
+		return ($a->navmenu_position < $b->navmenu_position) ? -1 : 1;
 	}
 	
 	public function createStore($post,$page_id) {
@@ -571,10 +603,11 @@ EOD;
 			'default_sorting' => $post['default_sorting'],
 			'default_sorting_by' => $post['default_sorting_by'],
 			'items_order' => $post['items_order'],
-			'featured_item' => $post['featured_item']				//to be deprecated
+			'featured_item' => $post['featured_item'],				//to be deprecated
+			'navmenu_position' => $post['navmenu_position']
 		);
 		//Add to the store table
-		$this->wpdb->insert($this->wpdb->prefix.'topspin_stores',$data,array('%d','%s','%d','%d','%d','%s','%s','%s','%d'));
+		$this->wpdb->insert($this->wpdb->prefix.'topspin_stores',$data,array('%d','%s','%d','%d','%d','%s','%s','%s','%d','%d'));
 		$store_id = $this->wpdb->insert_id;
 		## Add Featured images
 		$this->createStoreFeaturedItems($post['featured_item'],$store_id);
@@ -728,15 +761,38 @@ EOD;
 			'grid_columns' => $post['grid_columns'],
 			'default_sorting' => $post['default_sorting'],
 			'default_sorting_by' => $post['default_sorting_by'],
-			'items_order' => $post['items_order']
+			'items_order' => $post['items_order'],
+			'navemenu_position' => $post['navmenu_position']
 		);
-		$this->wpdb->update($this->wpdb->prefix.'topspin_stores',$data,array('store_id'=>$store_id),array('%d','%d','%d','%s','%s','%s'),array('%d'));
+		$this->wpdb->update($this->wpdb->prefix.'topspin_stores',$data,array('store_id'=>$store_id),array('%d','%d','%d','%s','%s','%s','%d'),array('%d'));
 		## Add Featured Items
 		$this->updateStoreFeaturedItems($post['featured_item'],$store_id);
 		## Add Offer Types
 		$this->updateStoreOfferTypes($post['offer_types'],$store_id);
 		## Add Tags
 		$this->updateStoreTags($post['tags'],$store_id);
+	}
+
+	public function updateStoreNavMenuPosition($new_position,$store_id) {
+		##      Updates the specified store's nav menu position.
+                ##
+                ##      PARAMETERS
+                ##              @new_position                   The new nav menu position of the specified store. 
+                ##              @store_id                       The store ID to edit
+                ##
+                ##      RETURN
+                ##              True on success
+                ##              False on failure
+		$success = $this->wpdb->update($this->wpdb->prefix.'topspin_stores',
+						array('navmenu_position' => $new_position),
+						array('store_id' => $store_id),
+						array('%d'),
+						array('%d'));
+		if (!$success) { 
+			return (bool)false;
+		} else { 
+			return (bool)true;
+		}
 	}
 	
 	public function updateStoreFeaturedItems($featured_item,$store_id) {
@@ -814,7 +870,8 @@ EOD;
 			{$this->wpdb->prefix}topspin_stores.grid_columns,
 			{$this->wpdb->prefix}topspin_stores.default_sorting,
 			{$this->wpdb->prefix}topspin_stores.default_sorting_by,
-			{$this->wpdb->prefix}topspin_stores.items_order
+			{$this->wpdb->prefix}topspin_stores.items_order,
+			{$this->wpdb->prefix}topspin_stores.navmenu_position
 		FROM {$this->wpdb->prefix}topspin_stores
 		LEFT JOIN
 			{$this->wpdb->prefix}posts ON {$this->wpdb->prefix}topspin_stores.post_id = {$this->wpdb->prefix}posts.ID

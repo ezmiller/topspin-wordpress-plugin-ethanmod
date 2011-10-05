@@ -1,9 +1,13 @@
-<?php
+<?php 
 
+
+global $store;
+$menu = $store->getSetting('topspin_navmenu');
 
 ?>
 
-
+<!-- Only print out menu if the menu is activated -->
+<?php if ($menu == 'on') : ?>
 <div class="topspin-store-navmenu">
 <ul class="topspin-store-navmenu">
 <?php foreach ($storesList as $item) : ?>
@@ -19,3 +23,4 @@ $(function(){
    }
 });
 </script>
+<?php endif; ?>

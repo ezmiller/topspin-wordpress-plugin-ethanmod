@@ -2,13 +2,15 @@
 
 /*
  *
- *	Last Modified:			September 10, 2011
+ *	Last Modified:			September 29, 2011
  *
  *	--------------------------------------
  *	Change Log
  *	--------------------------------------
- *      2011-09-10
+ *      2011-09-29
 		- Added shortcode for nav menu
+		- Added code to set nav menu position to $storeData array
+		- Modified updateStore code to handle submission of nav menu position in $storeData array
  *	2011-08-11
  		- Fixed some PHP warnings
  		- Fixed sorting preview bug (product sorting and sort by select boxes)
@@ -55,7 +57,8 @@ $storeData = array(
 	'items_order' => '',
 	'featured_item' => array(),
 	'offer_types' => $store->getOfferTypes(),
-	'tags' => $store->getTagList()
+	'tags' => $store->getTagList(),
+	'navmenu_position' => ( count($store->getStores()) + 1 )
 );
 $storePost = array();
 
