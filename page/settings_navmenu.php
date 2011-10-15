@@ -21,18 +21,19 @@ if ($store->getSetting('topspin_navmenu') == 'on') {
 }
 $template = $store->getSetting('topspin_template_mode');
 
-if (isset($_POST['storesList'])) { echo 'form submitted<br/>'; }
 // if the form has been submitted...
 if (isset($_POST['storesList'])) {
 
 	// check to see if the menu has been newly activated or deactivated
 	if ( $menu_set_on && !isset($_POST['navmenu-on']) ) {
 		$store->setSetting('topspin_navmenu','off'); 
-		$menu_set_on = false; 
+		$menu_set_on = false;
+		$menu_set_to = 'off'; 
 	}
 	if ( !$menu_set_on && isset($_POST['navmenu-on']) ) { 
 		$store->setSetting('topspin_navmenu','on');
 		$menu_set_on = true;
+		$menu_set_to = 'on';
 	}
 	
 	// if the menu is on check the order
@@ -42,7 +43,6 @@ if (isset($_POST['storesList'])) {
 		$newStoresList = $_POST['storesList'];
 		$orderChanged = false;
 		foreach ($newStoresList as $index => $storeName) {
-			echo "index: " . $index . " store name: " . $storeName . "<br/>";
 			if ($storeName != $orderedStoresList[$index]->post_title) {
 				$orderChanged = true;
 				break;
@@ -111,7 +111,17 @@ jQuery(function($) {
 <?php else : ?>
 <div class="wrap">
 	<h2>Menu Settings</h2>
-		
+
+	<?php if ( $orderChanged && $menu_set_to == 'on' ) : ?>
+		<div class="updated settings-error"><p><strong>Menu turned on and store order updated.</strong></p></div> 
+	<?php elseif ( $orderChanged ) : ?>
+		<div class="updated settings-error"><p><strong>Store order updated.</strong></p></div>
+	<?php elseif ( $menu_set_to == 'off' ) : ?>
+		<div class="updated settings-error"><p><strong>The Menu is now off.</strong></p></div>
+	<?php elseif ( $menu_set_to == 'on' ) : ?>
+		<div class="updated settings-error"><p><strong>The Menu is now on.</strong></p></div>	
+	<?php endif; ?>
+	
 	<form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
 	<table class="form-table">
 		<tbody>
